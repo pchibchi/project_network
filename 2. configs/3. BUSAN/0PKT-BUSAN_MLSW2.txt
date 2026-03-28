@@ -1,0 +1,83 @@
+en
+!
+conf t
+!
+no ip domain-lookup
+!
+! HOSTNAME
+hostname BUSAN_MLSW2
+!
+! ENABLE PASSWORD
+enable secret busan_mlsw2
+!
+line con 0
+  logging synchronous
+  ! need to be before hand in 5 0
+  exec-timeout 5 0
+  ! CONSOLE PASSWORD
+  password busan_mlsw2
+  login
+!
+line vty 0 4
+  logging synchronous
+  ! need to be before hand in 5 0
+  exec-timeout 5 0
+  ! VTY PASSWORD
+  password busan_mlsw2
+  login
+!
+!vtp setting
+vtp mode server
+vtp domain busan
+vtp password busan
+!
+!create vlan 10,20,30,40
+!sw1 vlan
+vlan 10
+  name BUSAN_SALES
+!sw2 vlan
+vlan 20
+  name BUSAN_HR
+!sw3 vlan
+vlan 30
+  name BUSAN_RND
+!sw4 vlan
+vlan 40
+  name BUSAN_FINANCE
+vlan 900
+  name ROUTER_LINK
+!mgmt vlan
+vlan 999
+  name BUSAN_MGMT
+!
+!create interface vlan 999(mgmt)
+interface vlan 999
+  ip address 192.168.199.2 255.255.255.0
+!
+!STP setting
+!rapid-pvst
+spanning-tree mode rapid-pvst
+!SEOUL_MLSW1 vlan 1,30,40,999 root secondary
+spanning-tree vlan 1,30,40,900,999 root secondary
+!SEOUL_MLSW2 vlan 10,20 root secondary
+spanning-tree vlan 10,20 root secondary
+!
+! BUSAN_MLSW2 etherchannel, port-channel 1
+interface range FastEthernet0/19-22
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-protocol pagp
+  channel-group 1 mode desirable
+!
+! BUSAN_MLSW2 etherchannel, f0/19-22
+interface Port-channel 1
+  !nonegotiate
+  switchport nonegotiate
+!
+!BUSAN_MLSW2-BUSAN_GW1(23),R2(24)
+interface range FastEthernet0/23-24
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+!
+end
+!

@@ -1,0 +1,278 @@
+en
+!
+conf t
+!------------------------------------------------------------BASIC SETTINGS
+no ip domain-lookup
+!
+! HOSTNAME
+hostname SEOUL_GW1
+!
+! ENABLE PASSWORD
+enable secret seoul_gw1
+!------------------------------------------------------------ACCESS & MANAGEMENT
+line con 0
+  logging synchronous
+  ! need to be before hand in 5 0
+  exec-timeout 5 0
+  ! CONSOLE PASSWORD
+  password seoul_gw1
+  login
+!
+line vty 0 4
+  !only SEOUL USERS CAN ACCESS THIS GW
+  access-class SSH_DENY_INB in
+  logging synchronous
+  ! need to be before hand in 5 0
+  exec-timeout 5 0
+  !vty uses ssh with login
+  transport input ssh
+  !user must login with local account of this router
+  login local
+!
+!create admin
+username admin_seoul privilege 15 password seouladm
+!create user
+username user_seoul privilege 5 password seoulusr
+!
+!set domain-name
+ip domain-name solchair.com
+!generate rsa key
+crypto key generate rsa
+!key bits
+512
+!------------------------------------------------------------ACCESS CONTROL
+! ACCESS-LIST NAT
+ip access-list extended NAT
+  !SEOUL 10.0 > BUSAN(50.0-80.0), TOKYO(90.0-120.0)
+  10 deny ip 192.168.10.0 0.0.0.255 192.168.50.0 0.0.0.255
+  20 deny ip 192.168.10.0 0.0.0.255 192.168.60.0 0.0.0.255
+  30 deny ip 192.168.10.0 0.0.0.255 192.168.70.0 0.0.0.255
+  40 deny ip 192.168.10.0 0.0.0.255 192.168.80.0 0.0.0.255
+  50 deny ip 192.168.10.0 0.0.0.255 192.168.90.0 0.0.0.255
+  60 deny ip 192.168.10.0 0.0.0.255 192.168.100.0 0.0.0.255
+  70 deny ip 192.168.10.0 0.0.0.255 192.168.110.0 0.0.0.255
+  80 deny ip 192.168.10.0 0.0.0.255 192.168.120.0 0.0.0.255
+  !SEOUL 20.0 > BUSAN(50.0-80.0), TOKYO(90.0-120.0)
+  90 deny ip 192.168.20.0 0.0.0.255 192.168.50.0 0.0.0.255
+  100 deny ip 192.168.20.0 0.0.0.255 192.168.60.0 0.0.0.255
+  110 deny ip 192.168.20.0 0.0.0.255 192.168.70.0 0.0.0.255
+  120 deny ip 192.168.20.0 0.0.0.255 192.168.80.0 0.0.0.255
+  130 deny ip 192.168.20.0 0.0.0.255 192.168.90.0 0.0.0.255
+  140 deny ip 192.168.20.0 0.0.0.255 192.168.100.0 0.0.0.255
+  150 deny ip 192.168.20.0 0.0.0.255 192.168.110.0 0.0.0.255
+  160 deny ip 192.168.20.0 0.0.0.255 192.168.120.0 0.0.0.255
+  !SEOUL 30.0 > BUSAN(50.0-80.0), TOKYO(90.0-120.0)
+  170 deny ip 192.168.30.0 0.0.0.255 192.168.50.0 0.0.0.255
+  180 deny ip 192.168.30.0 0.0.0.255 192.168.60.0 0.0.0.255
+  190 deny ip 192.168.30.0 0.0.0.255 192.168.70.0 0.0.0.255
+  200 deny ip 192.168.30.0 0.0.0.255 192.168.80.0 0.0.0.255
+  210 deny ip 192.168.30.0 0.0.0.255 192.168.90.0 0.0.0.255
+  220 deny ip 192.168.30.0 0.0.0.255 192.168.100.0 0.0.0.255
+  230 deny ip 192.168.30.0 0.0.0.255 192.168.110.0 0.0.0.255
+  240 deny ip 192.168.30.0 0.0.0.255 192.168.120.0 0.0.0.255
+  !SEOUL 40.0 > BUSAN(50.0-80.0), TOKYO(90.0-120.0)
+  250 deny ip 192.168.40.0 0.0.0.255 192.168.50.0 0.0.0.255
+  260 deny ip 192.168.40.0 0.0.0.255 192.168.60.0 0.0.0.255
+  270 deny ip 192.168.40.0 0.0.0.255 192.168.70.0 0.0.0.255
+  280 deny ip 192.168.40.0 0.0.0.255 192.168.80.0 0.0.0.255
+  290 deny ip 192.168.40.0 0.0.0.255 192.168.90.0 0.0.0.255
+  300 deny ip 192.168.40.0 0.0.0.255 192.168.100.0 0.0.0.255
+  310 deny ip 192.168.40.0 0.0.0.255 192.168.110.0 0.0.0.255
+  320 deny ip 192.168.40.0 0.0.0.255 192.168.120.0 0.0.0.255
+  !SEOUL 10.0-40.0 > ISP(any)
+  330 permit ip 192.168.10.0 0.0.0.255 any
+  340 permit ip 192.168.20.0 0.0.0.255 any
+  350 permit ip 192.168.30.0 0.0.0.255 any
+  360 permit ip 192.168.40.0 0.0.0.255 any
+!
+! NAT
+ip nat inside source list NAT interface serial1/0.14
+! inside fa0/0
+! outside s1/0.14
+!
+! ACL INBOUND
+! s1/0.14 in
+ip access-list extended SEOUL_INB
+  !permit gre(47)
+  10 permit gre any host 14.14.14.2
+  !permit udp isakmp(500)
+  20 permit udp any eq isakmp host 14.14.14.2 eq isakmp
+  !permit esp(50)
+  30 permit esp any host 14.14.14.2
+  100 deny ip any any log-input
+!
+! SSH DENY INBOUD
+! vty 0 4 in
+ip access-list standard SSH_DENY_INB
+  permit 192.168.10.0 0.0.0.255
+  permit 192.168.20.0 0.0.0.255
+  permit 192.168.30.0 0.0.0.255
+  permit 192.168.40.0 0.0.0.255
+  !SSH MGMT
+  permit 192.168.99.0 0.0.0.255
+  deny any log
+!
+! CBAC tcp(audit-trail), udp, icmp(audit-trail)
+! s1/0.14 out
+ip inspect name SEOUL_OUTB tcp audit-trail on
+ip inspect name SEOUL_OUTB udp
+ip inspect name SEOUL_OUTB icmp audit-trail on
+!------------------------------------------------------------IP SERVICE & OTHERS
+!dhcp setting
+!252(dns), 253(HSRP VIP), 254(sub-intf ip)
+!vlan10,30 1-127 / vlan20,40 128-251
+ip dhcp excluded-address 192.168.10.128 192.168.10.254
+ip dhcp excluded-address 192.168.20.0 192.168.20.127
+ip dhcp excluded-address 192.168.20.251 192.168.20.254
+ip dhcp excluded-address 192.168.30.128 192.168.30.254
+ip dhcp excluded-address 192.168.40.0 192.168.40.127
+ip dhcp excluded-address 192.168.40.251 192.168.40.254
+!
+ip dhcp pool V10_DHCP
+  network 192.168.10.0 255.255.255.0
+  default-router 192.168.10.254
+  dns-server 192.168.10.251
+!
+ip dhcp pool V20_DHCP
+  network 192.168.20.0 255.255.255.0
+  default-router 192.168.20.254
+  dns-server 192.168.20.251
+!
+ip dhcp pool V30_DHCP
+  network 192.168.30.0 255.255.255.0
+  default-router 192.168.30.254
+  dns-server 192.168.30.251
+!
+ip dhcp pool V40_DHCP
+  network 192.168.40.0 255.255.255.0
+  default-router 192.168.40.254
+  dns-server 192.168.40.251
+!
+!SYSLOG CONNECT WITH HOST PC
+logging source-interface FastEthernet0/1
+logging 192.168.131.1
+logging trap debugging
+!------------------------------------------------------------SECURITY SETTINGS
+crypto isakmp enable
+!
+!PHASE-1 ISAKMP POLICY
+crypto isakmp policy 1
+  authentication pre-share
+  encryption aes
+  hash sha
+  group 5
+  lifetime 86400
+!
+!CRYPTO KEYRING(HUB-dynamic, SPOKE-static,dynamic)
+crypto keyring P1_KR
+  pre-shared-key address 0.0.0.0 0.0.0.0 key solchair
+!
+!ISAKMP PROFILE(HUB dynamic, SPOKE-static,dynamic)
+crypto isakmp profile P1_PRF
+  keyring P1_KR
+  match identity address 0.0.0.0 0.0.0.0
+!
+!PHASE-2 IPSEC TRANSFORM-SET
+crypto ipsec transform-set VPN esp-aes esp-sha-hmac
+!
+!IPSEC PROFILE
+crypto ipsec profile DMVPN
+  set isakmp-profile P1_PRF
+  set transform-set VPN
+  set security-association lifetime seconds 3600
+!------------------------------------------------------------INTERFACE
+interface loopback 0 
+  ip address 123.123.4.4 255.255.255.255
+!
+!SEOUL_LAN
+interface FastEthernet0/0
+  no shutdown
+  !ROUTER_LINK vlan 900
+  !ip address 192.168.250.1 255.255.255.0
+  ip address 192.168.10.252 255.255.255.0 !secondary
+  ip address 192.168.20.252 255.255.255.0 secondary
+  ip address 192.168.30.252 255.255.255.0 secondary
+  ip address 192.168.40.252 255.255.255.0 secondary
+  !IP NAT INSIDE
+  ip nat inside
+  !HSRP
+  standby 10 ip 192.168.10.254
+  standby 10 priority 150
+  standby 10 preempt delay minimum 60
+  standby 10 timers 2 10
+  standby 10 track Serial1/0.14 100
+  !HSRP
+  standby 20 ip 192.168.20.254
+  standby 20 priority 150
+  standby 20 preempt delay minimum 60
+  standby 20 timers 2 10
+  standby 20 track Serial1/0.14 100
+  !HSRP
+  standby 30 ip 192.168.30.254
+  standby 30 priority 80
+  standby 30 preempt
+  standby 30 timers 2 10
+  !HSRP
+  standby 40 ip 192.168.40.254
+  standby 40 priority 80
+  standby 40 preempt
+  standby 40 timers 2 10
+!
+interface serial1/0
+  no shutdown
+  encapsulation frame-relay
+  no frame-relay inverse-arp
+!
+!SEOUL_GW1-ISP1
+interface serial1/0.14 point-to-point
+  ip address 14.14.14.2 255.255.255.252
+  frame-relay interface-dlci 401
+  !IP NAT OUTSIDE
+  ip nat outside
+  !ACL
+  ip access-group SEOUL_INB in
+  !CBAC
+  ip inspect SEOUL_OUTB out
+!
+! mGRE TUNNEL1
+interface Tunnel1
+  ip address 20.20.20.1 255.255.255.0
+  ip mtu 1300
+  !tunnel source 123.123.4.4
+  tunnel source loopback 0
+  tunnel mode gre multipoint
+  ip nhrp network-id 1
+  ip nhrp authentication solchair
+  ip nhrp map multicast dynamic
+  !HUB2(SEOUL_GW2) static mapping
+  ip nhrp map 20.20.20.2 14.14.14.6
+  ip nhrp map multicast 14.14.14.6
+  !PHASE-3 HUB(redirect)
+  ip nhrp redirect
+  !turn off split-horizon
+  no ip split-horizon eigrp 100
+  !DMVPN setting
+  tunnel protection ipsec profile DMVPN
+!------------------------------------------------------------ROUTING PROTOCOL
+!eigrp 100, communicate in tunnel1, for connect with busan, tokyo
+router eigrp 100
+  passive-interface default
+  no passive-interface tunnel1
+  !INTERFACE TUNNEL1
+  network 20.20.20.0 0.0.0.255
+  !VLAN 10
+  network 192.168.10.0
+  !VLAN 20
+  network 192.168.20.0
+  !VLAN 30
+  network 192.168.30.0
+  !VLAN 40
+  network 192.168.40.0
+  !MGMT VLAN 999
+  network 192.168.99.0
+ no auto-summary
+!
+ip route 0.0.0.0 0.0.0.0 14.14.14.1
+!
+end
+!

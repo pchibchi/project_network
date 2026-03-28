@@ -1,0 +1,89 @@
+en
+!
+conf t
+!
+no ip domain-lookup
+!
+! HOSTNAME
+hostname TOKYO_MLSW1
+!
+! ENABLE PASSWORD
+enable secret tokyo_mlsw1
+!
+line con 0
+  logging synchronous
+  !------------- need to be before hand in 5 0
+  exec-timeout 5 0
+  ! CONSOLE PASSWORD
+  password tokyo_mlsw1
+  login
+!
+line vty 0 4
+  logging synchronous
+  !------------- need to be before hand in 5 0
+  exec-timeout 5 0
+  ! VTY PASSWORD
+  password tokyo_mlsw1
+  login
+!
+!vtp setting
+vtp mode server
+vtp domain tokyo
+vtp password tokyo
+!
+!create vlan 10,20,30,40
+!sw1 vlan
+vlan 10
+  name TOKYO_SALES
+!sw2 vlan
+vlan 20
+  name TOKYO_HR
+!sw3 vlan
+vlan 30
+  name TOKYO_RND
+!sw4 vlan
+vlan 40
+  name TOKYO_FINANCE
+vlan 900
+  name ROUTER_LINK
+!mgmt vlan
+vlan 999
+  name TOKYO_MGMT
+!
+!create interface vlan 999(mgmt)
+interface vlan 999
+  no shutdown
+  ip address 192.168.200.1 255.255.255.0
+!
+!STP setting
+!rapid-pvst
+spanning-tree mode rapid-pvst
+!TOKYO_MLSW1 vlan 1,10,20,999 root primary
+spanning-tree vlan 1,10,20,900,999 root primary
+!TOKYO_MLSW1 vlan 30,40 root secondary
+spanning-tree vlan 30,40 root secondary
+!
+! connected with access switch
+interface range gi0/0-3
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+!
+! TOKYO_MLSW2 etherchannel, port-channel 1
+interface range gi1/0-3
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  channel-protocol pagp
+  channel-group 1 mode desirable
+!
+! TOKYO_MLSW2 etherchannel, gi1/0-3
+interface Port-channel 1
+  !nonegotiate
+  switchport nonegotiate
+!
+!TOKYO_MLSW1-TOKYO_GW1(14),GW2(15)
+interface range gi3/2-3
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+!
+end
+!

@@ -1,0 +1,536 @@
+기능 구현 필요
+물리/가상 연결도 및 인터페이스 명명 규칙
+stp 정책(BPDU GUARD, PORTFAST, RSTP)
+로그/모니터링 연동(syslog)
+관리자/유저 권한 계정 관리(?)
+console/enable pw
+콘솔 접속 시 ssh 설정
+vpn 구성(mGRE,NHRP,DMVPN)
+보안(ACL,CBAC)
+
+================================================================
+
+config 작성 순서
+1. 시스템 기초 설정
+hostname, 시간, 도메인, 서비스 제어 등
+2. 액세스 및 관리
+line console, line vty
+3. 보안 제어
+ACL, policy-map, NAT
+4. IP서비스 및 기타 기능
+dhcp, snmp, syslog
+5.보안 구성
+VPN, IPSEC, GRE터널
+6. 물리/논리 인터페이스
+7. 라우팅 프로토콜
+eigrp, ospf, rip, bgp
+
+================================================================
+
+Dynamips 장비명
+R1 = ISP1
+R2 = ISP2
+R3 = ISP3
+R4 = SEOUL_GW1
+R5 = SEOUL_GW2
+R6 = BUSAN_GW1
+R7 = BUSAN_GW2
+R8 = TOKYO_GW1
+R9 = TOKYO_GW2
+R10 = SEOUL_LAN
+R11 = BUSAN_LAN
+R12 = TOKYO_LAN
+
+================================================================
+
+gw1,2 router-link 용 vlan
+vlan 900
+name ROUTER_LINK
+
+gw1,2 f0/0.900 
+seoul 192.168.250.0/24
+busan 192.168.251.0/24
+tokyo 192.168.252.0/24
+
+gw1,2 f0/1.900 (터널 소스 루프백 인터페이스 사용 시 구성)
+seoul 192.168.253.0/24
+
+================================================================
+
+SEOUL 내부망
+-GW1,GW2
+NAT(VLAN10,20,30,40)
+GW간 LAN HSRP 구성
+DHCP설정
+GW1
+vlan10,30(192.168.X.0/25)
+vlan20,40(192.168.X.128/25)
+GW2
+vlan20,40(192.168.X.0/25)
+vlan10,30(192.168.X.128/25)
+
+SW1
+VLAN 10 : SEOUL_SALES
+(192.168.10.X)
+SW2
+VLAN 20 : SEOUL_HR
+(192.168.20.X)
+SW3
+VLAN 30 : SEOUL_RND
+(192.168.30.X)
+SW4
+VLAN 40 : SEOUL_FINANCE
+(192.168.40.X)
+VLAN999 : MGMT
+(INTF VLAN 192.168.99.X)
+GW IP : 192.168.X.254
+
+VTP
+SERVER : MLSW1,2
+CLIENT : SW1,SW2,SW3,SW4
+DOMAIN : seoul
+PASSWORD : seoul
+
+================================================================
+
+BUSAN 내부망
+-GW1,GW2
+NAT(VLAN10,20,30,40)
+GW간 LAN HSRP 구성
+DHCP설정
+GW1
+vlan10,30(192.168.X.0/25)
+vlan20,40(192.168.X.128/25)
+GW2
+vlan20,40(192.168.X.0/25)
+vlan10,30(192.168.X.128/25)
+
+-SW-MLSW 이더채널(2포트씩)
+
+SW1
+VLAN 10 : BUSAN_SALES
+(192.168.50.X)
+SW2
+VLAN 20 : BUSAN_HR
+(192.168.60.X)
+SW3
+VLAN 30 : BUSAN_RND
+(192.168.70.X)
+SW4
+VLAN 40 : BUSAN_FINANCE
+(192.168.80.X)
+VLAN999 : MGMT
+(INTF VLAN 192.168.199.X)
+GW IP : 192.168.X.254
+
+VTP
+SERVER : MLSW1,2
+CLIENT : SW1,SW2,SW3,SW4
+DOMAIN : busan
+PASSWORD : busan
+
+================================================================
+
+TOKYO 내부망
+-GW1,GW2
+NAT(VLAN10,20,30,40)
+GW간 LAN HSRP 구성
+DHCP설정
+GW1
+vlan10,30(192.168.X.0/25)
+vlan20,40(192.168.X.128/25)
+GW2
+vlan20,40(192.168.X.0/25)
+vlan10,30(192.168.X.128/25)
+
+-SW-MLSW 이더채널(2포트씩)
+
+SW1
+VLAN 10 : TOKYO_SALES
+(192.168.90.X)
+SW2
+VLAN 20 : TOKYO_HR
+(192.168.100.X)
+SW3
+VLAN 30 : TOKYO_RND
+(192.168.110.X)
+SW4
+VLAN 40 : TOKYO_FINANCE
+(192.168.120.X)
+VLAN999 : MGMT
+(INTF VLAN 192.168.200.X)
+GW IP : 192.168.X.254
+
+VTP
+SERVER : MLSW1,2
+CLIENT : SW1,SW2,SW3,SW4
+DOMAIN : tokyo
+PASSWORD : tokyo
+
+================================================================
+
+MLSW 간 이더채널 구성
+SEOUL_MLSW1 - SEOUL_MLSW2
+f0/19-f0/22
+Etherchannel pagp
+둘다 SW desirable
+
+BUSAN_MLSW1 - BUSAN_MLSW2
+f0/19-f0/22
+Etherchannel pagp
+둘다 SW desirable
+
+TOKYO_MLSW1 - TOKYO_MLSW2
+f0/19-f0/22
+Etherchannel pagp
+둘다 SW desirable
+
+================================================================
+
+각 ROUTER LOOPBACK 0 생성
+ISP1 : 123.123.1.1/32
+ISP2 : 123.123.2.2/32
+ISP3 : 123.123.3.3/32
+SEOUL_GW1 : 123.123.4.4/32
+SEOUL_GW2 : 123.123.5.5/32
+BUSAN_GW1 : 123.123.6.6/32
+BUSAN_GW2 : 123.123.7.7/32
+TOKYO_GW1 : 123.123.8.8/32
+TOKYO_GW2 : 123.123.9.9/32
+
+================================================================
+
+IP 대역
+ISP1-ISP2
+ISP1 : 10.10.12.1/29
+ISP2 : 10.10.12.2/29
+
+ISP1-ISP3
+ISP1 : 10.10.13.1/29
+ISP3 : 10.10.13.3/29
+
+ISP2-ISP3
+ISP2 : 10.10.23.2/29
+ISP3 : 10.10.23.3/29
+
+ISP1-SEOUL
+ISP1 : 14.14.14.1/30, 5/30
+SEOUL_GW1 : 14.14.14.2/30
+SEOUL_GW2 : 14.14.14.6/30
+
+ISP2-BUSAN
+ISP2 : 26.26.26.1/30, 5/30
+BUSAN_GW1 : 26.26.26.2/30
+BUSAN_GW2 : 26.26.26.6/30
+
+ISP3-TOKYO
+ISP3 : 38.38.38.1/30, 5/30
+TOKYO_GW1 : 38.38.38.2/30
+TOKYO_GW2 : 38.38.38.6/30
+
+각 GW에서 ISP로 DEFAULT ROUTE 설정
+
+================================================================
+
+mGRE
+SEOUL,BUSAN,TOKYO TUNNEL
+INTERFACE TUNNEL 1
+
+TUNNEL IP
+SEOUL_GW1 : 20.20.20.1
+SEOUL_GW2 : 20.20.20.2
+BUSAN_GW1 : 20.20.20.3
+BUSAN_GW2 : 20.20.20.4
+TOKYO_GW1 : 20.20.20.5
+TOKYO_GW2 : 20.20.20.6
+
+tunnel source는 wan interface 주소로 설정 > 추후 hub 2대만 loopback interface로 수정
+
+NHRP
+nhrp network-id 1
+nhrp authentication solchair
+
+================================================================
+
+DMVPN
+PHASE-1
+crypto isakmp policy 1
+authentication : pre-share
+encryption : aes
+hash : sha
+D-H group : 5
+lifetime : 86400
+
+keyring : P1_KR
+hub : dynamic(0.0.0.0)
+spoke : hub ip, dynamic(0.0.0.0) > phase-3 용도(spoke 간 통신)
+keyring_key : solchair
+
+isakmp profile : P1_PRF
+hub : dynamic(0.0.0.0)
+spoke : hub ip, dynamic(0.0.0.0) > phase-3 용도(spoke 간 통신), local-address(nbma ip)
+
+PHASE-2
+protocol : esp
+encryption : aes
+hash : sha-hmac
+lifetime : 3600
+
+ipsec transform-set : VPN
+ipsec profile : DMVPN
+
+PHASE-3
+hub : ip nhrp redirect
+spoke : ip nhrp shortcut
+
+================================================================
+
+ACL, CBAC
+
+SEOUL,BUSAN,TOKYO GW1,2에서 설정
+
+HOSTNAME_INB
+!permit eigrp(88) dmvpn 구축 시 esp데이터로 주고받아서 안해도됨
+permit udp isakmp(500)
+permit udp isakmp(4500) nat-t(nat-traversal) 환경이면 설정(hub 터널 소스를 loopback interface로 사용시 nat 필요)
+!permit gre(47) dmvpn 구축 시 esp데이터로 주고받아서 안해도됨
+permit esp(50)
+deny ip any any log-input
+
+CBAC NAME : HOSTNAME_OUTB
+tcp audit-trail on
+udp
+icmp audit-trail on
+
+================================================================
+
+로그/모니터링 연동(syslog)
+logging source-interface FastEthernet0/1
+logging 192.168.131.1
+logging trap debugging
+
+SEOUL_GW1에 f0/1과 host pc 연결
+f0/1 ip : 131.2
+net파일 설정(npf값은 wireshark로 확인), winpcap, npcap 최신버전설치
+fa0/1 = NIO_gen_eth:\Device\NPF_{CFA13ABE-8D06-4BAC-82C7-C380FE041B9A}
+
+================================================================
+
+관리자/유저 권한 계정 관리
+
+관리자 계정
+username admin_seoul privilege 15 password seouladm
+username admin_busan privilege 15 password busanadm
+username admin_tokyo privilege 15 password tokyoadm
+
+일반 유저 계정
+username user_seoul privilege 5 password seoulusr
+username user_busan privilege 5 password busanusr
+username user_tokyo privilege 5 password tokyousr
+
+ssh 설정
+line vty 0 4
+  login local
+  transport input ssh
+
+domain-name 설정
+ip domain-name solchair.com
+
+rsa key 생성
+crypto key generate rsa
+key 크기 512
+
+각 지사 내부에서만 접속할 수 있게 acl 생성
+seoul_gw > 내부망 ip만 접속 가능
+busan_gw > 내부망 외 ip대역 접속 차단 및 서울mgmt 대역의 접속만 허용(192.168.99.X)
+tokyo_gw > 내부망 외 ip대역 접속 차단 및 서울mgmt 대역의 접속만 허용(192.168.99.X)
+ip access-list standard SSH_DENY_INB
+
+vty에 acl 적용(in)
+access-class SSH_DENY_INB in
+
+================================================================
+
+project 목차
+1.  프로젝트 개요 및 일정-회사 소개 및 구축 일정
+2.  네트워크 디자인 및 구현 기술-전체 네트워크 구성 (Topology, 기술 나열)
+3.  IP주소 체계 및 VLAN 설계-IP 대역 엑셀, vlan 정보, 포트 구성도
+4.  LAN L2 상세 구성-VTP, STP, EtherChannel
+5.  GW이중화 및 DHCP (LAN L3)-HSRP, DHCP
+6.  WAN 연결 및 라우팅-ISP Topology, OSPF
+7.  보안 및 VPN 구성 (DMVPN/IPSec)-NAT, ACL, CBAC, DMVPN, NHRP
+8.  운영관리 및 접근제어-Syslog, SSH
+
+ip 대역
+전체 토폴로지(장비명 포함) 및 구현 기술 소개
+내/외부망 구성 및 연결 포트 구성도 캡쳐
+
+내부망 sw
+vtp(mode, domain, password) > show vtp status
+내부 vlan 정보 show vlan brief
+stp(rstp도 같이) loop방지 rp/ap 확인 show spanning-tree 
+port-security
+bpdu guard
+
+내부망 mlsw
+mlsw간 etherchannel구성 show etherchannel summary
+
+내부망 gw
+dhcp ip 할당 캡쳐(pc에서 renew)
+dhcp binding 캡쳐 > sh ip dhcp binding
+hsrp > show standby brief
+hsrp 이중화 ping 캡쳐
+
+각 내부망 gw > isp default route
+
+외부망 간 ospf > show ip ospf neighbor
+
+보안정책
+nat > show nat translation
+acl > show access-lists
+cbac > show ip inspect
+ipsec(esp 패킷 캡쳐)
+dmvpn > show dmvpn
+nhrp > show ip nhrp(spoke-spoke간 직접 통신 패킷 캡쳐)
+
+로그 서버 syslog watcher 캡쳐
+isakmp hub-spoke, spoke-spoke 연결 로그
+
+ssh설정
+각 내부망에서 gw 접속 확인
+다른 지사에서 gw 접속 차단 확인
+서울망에서 gw접속 가능 확인
+ssh -l [username] [ip]
+
+================================================================
+
+config 다듬기
+pkt / dyn / gns 용 서울,부산,도쿄 동기화
+github에 업로드
+
+================================================================
+
+발표 대본
+
+부제목 읽기
+
+인사
+목차 소개
+1.프로젝트 개요 및 일정(텍스트만 읽고 짧게)
+
+2.네트워크 디자인 및 구현 기술
+2-1 서울 본사, 부산 지사, 도쿄 지사 소개, 장비 종류 및 개수 
+2-2 텍스트
+2-3 텍스트
+2-4 각 지사 gw까지 통신이 모두 가능한 점 설명
+2-5 보안 기술을 두 페이지에 나누어 설명
+2-6 서울 gw 두대는 hub, 부산,도쿄 gw2대씩 spoke
+
+3. IP주소 체계 및 PORT 구성도
+3-1 위치와 장비 역할, 번호를 조합해 장비명 설정
+3-2 vlan, wan, tunnel, loopback 인터페이스 ip 대역 설계
+3-3 lan, wan구간 장비 포트 구성도
+
+4. 장비 기본 설정
+4-1 미리 정해둔 장비명 규칙에 따라 설정, enable password, console password 및 exec-timeout 설정
+
+5. LAN L2 상세 구성
+5-1,2 vtp(vlan trunking protocol) 설명 / server, client 역할 / domain, password 일치
+      vtp : vlan db 공유 목적 프로토콜 
+5-3~6 vtp client의 vlan 생성 확인
+5-7 rstp(rapid-pvst) 설명 / 모든 mlsw 및 sw에 rstp 설정 및 적용 확인
+    rstp(ieee 802.1w) : bpdu 교환 후 대기시간 없이 proposal msg, aggrement msg 교환
+    서로 dp라고 주장하는 proposal msg 송신 > 수신한 sw의 bridge-id 값이 크면 aggrement msg 송신
+5-8 access port에 portfast 및 bpduguard 설정
+    portfast : 해당 포트에 stp동작 X, convergence time(listening, learning) 없이 바로 forwarding으로 전환
+    bpduguard : 해당 포트로 bpdu 수신 시 err-disabled 로 전환
+5-9 portfast 적용 확인
+5-10 bpduguard 설정된 port에 sw 연결 테스트
+     err-disabled : 논리적으로 shutdown된 포트. shutdown > no shutdown으로 활성화
+5-11 mlsw1,2에 각각 root primary/secondary 설정
+5-12,13 mlsw1의 vlan10,20 root bridge / vlan30,40 backup root bridge
+5-14,15 mlsw2의 vlan30,40 root bridge / vlan10,20 backup root bridge
+5-16 sw1의 fa0/23(mlsw1) vlan10,20 rp/vlan30,40 ap
+     sw1의 fa0/24(mlsw2) vlan30,40 rp/vlan10,20 ap
+5-17 mlsw1,2 etherchannel 설정
+     nonegotiate : dtp 패킷 송수신 비활성화해 vlan hopping 공격 방지
+     dtp(dynamic trunking protocol) : dtp 패킷을 송수신해 access/trunk mode를 설정하는 프로토콜
+     access mode : dtp 송신X, 수신O
+     trunk mode : dtp 송수신O
+5-18 mlsw1,2 etherchannel 적용 확인
+
+6. gw이중화 및 dhcp
+6-1 gw-mlsw 간 cross-link 구성 이유 설명(gw 간 연결)
+    cross-link를 구성하지 않으면 현재 연결도에서 gw간 연결되는 네트워크가 없음(sub interface를 반씩 나눠서 연결한 상태)
+6-2 gw1이 vlan10,20의 active / gw2가 vlan30,40의 active
+6-3 vip는 192.168.X.254 로 설정 확인
+6-4 hsrp failover test(gw1의 wan link 장애 후 복구)
+6-5 gw1의 wan link 장애 발생 시 track 옵션에 의해 priority 낮아짐 > vlan10,20 gw2가 active
+6-6,7 gw1,2의 dhcp설정 각각 vlan10,30 / vlan20,40의 ip를 반씩 나눠서 할당
+6-8 pc에서 dhcp 갱신 후 새로운 주소를 받음
+6-9 gw에서 할당중인 ip 목록
+
+7. wan연결 및 라우팅
+7-1~3 isp의 ospf 설정, no passive-interface는 서로 연결된 link, network 의미 설명(gw와 연결된 link 포함)
+7-4 isp의 ospf 인접성 확인
+7-5 각 지사 gw>isp로 default route 설정(본사-지사 간 물리주소 통신은 가능해야 함)
+7-6 각 지사 gw의 eigrp 설정 / mgmt vlan은 서울만 포함(ssh 접근 용도)하며 부산,도쿄는 포함하지 않음
+    (hub만 설정)dmvpn 기술을 사용하므로 hub&spoke 방식에서 eigrp 업데이트를 주고받기 위해 split-horizon 해제
+      split-horizon을 해제하면 spokeA에게 tunnel interface로 받은 정보를 다시 spokeB로 tunnel interface로 보낼 수 있음
+    (hub만 설정)spoke 간의 통신을 위해 next-hop-self 기능 해제
+        next-hop-self 기능은 spokeA로부터 받은 라우팅 정보를 spokeB에게 전달할 때 next-hop을 spokeA의 ip로 전달
+        spokeA와 spokeB가 hub를 거치지 않고 직접 통신 가능
+7-7 본사 및 지사 gw들 모두 eigrp 인접성 형성 확인
+    본사 gw는 dual hub 환경이므로 gw1,2간 eigrp 인접성 및 모든 지사의 gw와 인접성 형성
+    각 지사 gw는 본사의 gw1,2만(dual hub, tunnel1로) eigrp 인접성 형성
+7-8 본사 GW의 라우팅 테이블, 각 지사들의 내부망 확인 가능
+7-9 부산,도쿄 지사 GW의 라우팅 테이블, ip next-hop-self 적용 전후 비교
+
+8. 보안 및 vpn구성
+8-1 nat 설정. 각 지사 내부망끼리 통신 시 nat변환을 하지않으며 외부로 통신시에만 nat변환
+    gw의 wan 인터페이스 주소를 사용
+    내부 인터페이스에 ip nat inside 설정
+    외부 인터페이스에 ip nat outside 설정
+8-2 nat 변환 테이블 확인
+8-3 inbound acl 설정 및 확인(deny에 log-input 옵션으로 차단되는 패킷에 로그 출력)
+    초기에 wan ip로 ike phase-1,2 수립을 위해 isakmp(udp 500) 허용
+    ike phase-1,2 수립 후 esp 통신을 위해 esp(protocol 50) 허용
+8-4 cbac 설정(tcp, icmp 세션 생성 시 로그 출력)
+    wan interface에 cbac out 설정 : 내부에서 외부로 나가는 데이터에 세션을 추적하니까 out
+8-5 외부망 통신시 cbac 세션 생성 확인
+8-6 dmvpn_mgre_server 설정 dual server 구성으로 server2 static 매핑
+    spoke-spoke 통신을 위해 redirect 설정
+8-7 dmvpn_mgre_client 설정 dual server 구성으로 server1,2 static 매핑
+    spoke-spoke 통신을 위해 shortcut 설정
+8-8 dmvpn_ipsec_hub 설정 spoke들을 dynamic 방식으로 등록하기 위해 0.0.0.0 사용
+    phase-1
+        authentication : 사전 인증방식
+        encryption : aes
+        hash : sha(default)
+        diffie-hellman : group 5
+        lifetime : 1일(default)
+    phase-2
+        protocol : esp
+        encryption : aes
+        hash : sha-hmac
+        lifetime : 1시간(default)
+8-9 dmvpn_ipsec_spoke 설정 dual hub static방식으로 등록 및 spoke들을 dynamic방식으로 등록하기 위해 0.0.0.0 사용
+    phase-1,phase-2 설정은 hub와 동일
+8-10 hub-spoke 간 dynamic으로 터널 생성 확인(hub-hub는 static 매핑으로 생성)
+8-11 spoke-spoke 간 dynamic방식으로 터널 생성
+8-12 ike phase-2에서 생성한 ipsec sa가 생성완료
+     ipsec sa는 단방향이므로 2개씩 생성된다.(inbound, outbound) 서로의 inb-outb spi 값 동일한것 확인
+8-13 부산-도쿄 내부망끼리 통신 가능 확인
+8-14 부산-도쿄 패킷 캡쳐. ike phase-1(main mode),ike phase-2(quick mode) 패킷을 확인할 수 있으며
+     hub를 거치지 않고 직접 통신 확인, 서로의 spi값 패킷에서 확인
+
+9. 운영관리 및 접근제어
+9-1 log server 구축 및 운영, router에서 debugging 키면 모든 log들을 log server로 전송
+9-2 ssh를 위해 관리자 계정, 유저 계정 생성 및 vty에 적용할 acl 생성
+    기본적으로 각 지사의 내부망만 gw로 ssh 접속이 가능하며 본사인 서울의 mgmt망(vlan999)만 부산,도쿄 gw로 ssh 접속 가능
+9-3 ssh 서비스 활성화를 위해 도메인 이름 생성 및 rsa key 생성
+9-4 vty에 acl inbound로 적용, 해당 라우터의 local 계정만 vty접속에 사용하는 설정, vty 접속 방식은 ssh로 설정
+9-5 서울gw로 관리자/유저 계정 접속 테스트
+9-6 서울 내부망에서 부산gw로 ssh 접속 시 vty acl에 의해 차단(각 gw 내부 주소 사용)
+9-7 서울 내부망에서 부산,도쿄 gw로 ssh 접속 시 wan inbound에 의해 차단(각 gw 외부 주소 사용)
+9-8 서울 mgmt망에서 부산,도쿄 gw로 ssh 접속 성공

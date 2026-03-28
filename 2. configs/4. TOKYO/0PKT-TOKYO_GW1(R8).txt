@@ -1,0 +1,223 @@
+en
+!
+conf t
+!------------------------------------------------------------BASIC SETTINGS
+no ip domain-lookup
+!
+! HOSTNAME
+hostname TOKYO_GW1
+!
+! ENABLE PASSWORD
+enable secret tokyo_gw1
+!------------------------------------------------------------ACCESS & MANAGEMENT
+line con 0
+  logging synchronous
+  ! need to be before hand in 5 0
+  exec-timeout 0 0
+  ! CONSOLE PASSWORD
+  password tokyo_gw1
+  login
+!
+line vty 0 4
+  !only TOKYO USERS CAN ACCESS THIS GW
+  access-class SSH_DENY_INB in
+  logging synchronous
+  ! need to be before hand in 5 0
+  exec-timeout 5 0
+  !vty uses ssh with login
+  transport input ssh
+  !user must login with local account of this router
+  login local
+!
+!create admin
+username admin_tokyo privilege 15 password tokyoadm
+!create user
+username user_tokyo privilege 5 password tokyousr
+!
+!set domain-name
+ip domain-name solchair.com
+!generate rsa key
+crypto key generate rsa
+!key bits
+512
+!------------------------------------------------------------ACCESS CONTROL
+! ACCESS-LIST NAT
+ip access-list extended NAT
+  !TOKYO 90.0 > SEOUL(10.0-40.0), BUSAN(50.0-80.0)
+  10 deny ip 192.168.90.0 0.0.0.255 192.168.10.0 0.0.0.255
+  20 deny ip 192.168.90.0 0.0.0.255 192.168.20.0 0.0.0.255
+  30 deny ip 192.168.90.0 0.0.0.255 192.168.30.0 0.0.0.255
+  40 deny ip 192.168.90.0 0.0.0.255 192.168.40.0 0.0.0.255
+  50 deny ip 192.168.90.0 0.0.0.255 192.168.50.0 0.0.0.255
+  60 deny ip 192.168.90.0 0.0.0.255 192.168.60.0 0.0.0.255
+  70 deny ip 192.168.90.0 0.0.0.255 192.168.70.0 0.0.0.255
+  80 deny ip 192.168.90.0 0.0.0.255 192.168.80.0 0.0.0.255
+  !TOKYO 100.0 > SEOUL(10.0-40.0), BUSAN(50.0-80.0)
+  90 deny ip 192.168.100.0 0.0.0.255 192.168.10.0 0.0.0.255
+  100 deny ip 192.168.100.0 0.0.0.255 192.168.20.0 0.0.0.255
+  110 deny ip 192.168.100.0 0.0.0.255 192.168.30.0 0.0.0.255
+  120 deny ip 192.168.100.0 0.0.0.255 192.168.40.0 0.0.0.255
+  130 deny ip 192.168.100.0 0.0.0.255 192.168.50.0 0.0.0.255
+  140 deny ip 192.168.100.0 0.0.0.255 192.168.60.0 0.0.0.255
+  150 deny ip 192.168.100.0 0.0.0.255 192.168.70.0 0.0.0.255
+  160 deny ip 192.168.100.0 0.0.0.255 192.168.80.0 0.0.0.255
+  !TOKYO 110.0 > SEOUL(10.0-40.0), BUSAN(50.0-80.0)
+  170 deny ip 192.168.110.0 0.0.0.255 192.168.10.0 0.0.0.255
+  180 deny ip 192.168.110.0 0.0.0.255 192.168.20.0 0.0.0.255
+  190 deny ip 192.168.110.0 0.0.0.255 192.168.30.0 0.0.0.255
+  200 deny ip 192.168.110.0 0.0.0.255 192.168.40.0 0.0.0.255
+  210 deny ip 192.168.110.0 0.0.0.255 192.168.50.0 0.0.0.255
+  220 deny ip 192.168.110.0 0.0.0.255 192.168.60.0 0.0.0.255
+  230 deny ip 192.168.110.0 0.0.0.255 192.168.70.0 0.0.0.255
+  240 deny ip 192.168.110.0 0.0.0.255 192.168.80.0 0.0.0.255
+  !TOKYO 120.0 > SEOUL(10.0-40.0), BUSAN(50.0-80.0)
+  250 deny ip 192.168.120.0 0.0.0.255 192.168.10.0 0.0.0.255
+  260 deny ip 192.168.120.0 0.0.0.255 192.168.20.0 0.0.0.255
+  270 deny ip 192.168.120.0 0.0.0.255 192.168.30.0 0.0.0.255
+  280 deny ip 192.168.120.0 0.0.0.255 192.168.40.0 0.0.0.255
+  290 deny ip 192.168.120.0 0.0.0.255 192.168.50.0 0.0.0.255
+  300 deny ip 192.168.120.0 0.0.0.255 192.168.60.0 0.0.0.255
+  310 deny ip 192.168.120.0 0.0.0.255 192.168.70.0 0.0.0.255
+  320 deny ip 192.168.120.0 0.0.0.255 192.168.80.0 0.0.0.255
+  !TOKYO 90.0-120.0 > ISP(any)
+  330 permit ip 192.168.90.0 0.0.0.255 any
+  340 permit ip 192.168.100.0 0.0.0.255 any
+  350 permit ip 192.168.110.0 0.0.0.255 any
+  360 permit ip 192.168.120.0 0.0.0.255 any
+!
+! NAT
+ip nat inside source list NAT interface se1/2
+! inside fa0/1.10 fa0/1.20 fa0/0.30 fa0/0.40
+! outside se1/2
+!
+! SSH DENY INBOUD
+! vty 0 4 in
+ip access-list standard SSH_DENY_INB
+  permit 192.168.90.0 0.0.0.255
+  permit 192.168.100.0 0.0.0.255
+  permit 192.168.110.0 0.0.0.255
+  permit 192.168.120.0 0.0.0.255
+  !SSH MGMT
+  permit 192.168.99.0 0.0.0.255
+  deny any log
+!------------------------------------------------------------IP SERVICE & OTHERS
+!dhcp setting
+!252(dns), 253(HSRP VIP), 254(sub-intf ip)
+!vlan10,30 1-127 / vlan20,40 128-251
+ip dhcp excluded-address 192.168.90.128 192.168.90.254
+ip dhcp excluded-address 192.168.100.0 192.168.100.127
+ip dhcp excluded-address 192.168.100.251 192.168.100.254
+ip dhcp excluded-address 192.168.110.128 192.168.110.254
+ip dhcp excluded-address 192.168.120.0 192.168.120.127
+ip dhcp excluded-address 192.168.120.251 192.168.120.254
+!
+ip dhcp pool V10_DHCP
+  network 192.168.90.0 255.255.255.0
+  default-router 192.168.90.254
+  dns-server 192.168.90.251
+!
+ip dhcp pool V20_DHCP
+  network 192.168.100.0 255.255.255.0
+  default-router 192.168.100.254
+  dns-server 192.168.100.251
+!
+ip dhcp pool V30_DHCP
+  network 192.168.110.0 255.255.255.0
+  default-router 192.168.110.254
+  dns-server 192.168.110.251
+!
+ip dhcp pool V40_DHCP
+  network 192.168.120.0 255.255.255.0
+  default-router 192.168.120.254
+  dns-server 192.168.120.251
+!------------------------------------------------------------INTERFACE
+interface loopback 0 
+  ip address 123.123.8.8 255.255.255.0
+!
+!TOKYO_GW1-TOKYO_MLSW2
+interface FastEthernet0/0
+  no shutdown
+!
+!TOKYO_GW1-TOKYO_MLSW2 sub-interface vlan30
+interface FastEthernet0/0.30
+  encapsulation dot1Q 30
+  ip address 192.168.110.252 255.255.255.0
+  !IP NAT INSIDE
+  ip nat inside
+  !HSRP
+  standby 30 ip 192.168.110.254
+  standby 30 priority 145
+  standby 30 preempt
+  standby 30 timers 1 3
+!
+!TOKYO_GW1-TOKYO_MLSW2 sub-interface vlan40
+interface FastEthernet0/0.40
+  encapsulation dot1Q 40
+  ip address 192.168.120.252 255.255.255.0
+  !IP NAT INSIDE
+  ip nat inside
+  !HSRP
+  standby 40 ip 192.168.120.254
+  standby 40 priority 145
+  standby 40 preempt
+  standby 40 timers 1 3
+!
+!TOKYO_GW1-TOKYO_MLSW1
+interface FastEthernet0/1
+  no shutdown
+!
+!TOKYO_GW1-TOKYO_MLSW1 sub-interface vlan10
+interface FastEthernet0/1.10
+  encapsulation dot1Q 10
+  ip address 192.168.90.252 255.255.255.0
+  !IP NAT INSIDE
+  ip nat inside
+  !HSRP
+  standby 10 ip 192.168.90.254
+  standby 10 priority 150
+  standby 10 preempt
+  standby 10 timers 1 3
+  standby 10 track Serial1/2
+!
+!TOKYO_GW1-TOKYO_MLSW1 sub-interface vlan20
+interface FastEthernet0/1.20
+  encapsulation dot1Q 20
+  ip address 192.168.100.252 255.255.255.0
+  !IP NAT INSIDE
+  ip nat inside
+  !HSRP
+  standby 20 ip 192.168.100.254
+  standby 20 priority 150
+  standby 20 preempt
+  standby 20 timers 1 3
+  standby 20 track Serial1/2
+!
+!ROUTER_LINK vlan 900
+interface FastEthernet0/0.900
+  encapsulation dot1Q 900
+  ip address 192.168.252.1 255.255.255.252
+!
+!TOKYO_GW1-ISP1
+interface serial1/2
+  no shutdown
+  ip address 38.38.38.2 255.255.255.252
+  !IP NAT OUTSIDE
+  ip nat outside
+!------------------------------------------------------------ROUTING PROTOCOL
+!eigrp 100
+router eigrp 100
+ passive-interface default
+ no passive-interface serial1/2
+  no passive-interface FastEthernet0/0.900
+ network 192.168.90.0
+ network 192.168.100.0
+ network 192.168.110.0
+ network 192.168.120.0
+ network 38.38.38.0 0.0.0.255
+ network 123.123.8.0 0.0.0.255
+ no auto-summary
+!
+ip route 0.0.0.0 0.0.0.0 38.38.38.1
+!
+end
+!

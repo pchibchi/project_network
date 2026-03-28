@@ -1,0 +1,58 @@
+en
+!
+conf t
+!
+no ip domain-lookup
+!
+! HOSTNAME
+hostname SEOUL_SW1
+!
+! ENABLE PASSWORD
+!enable secret seoul_sw1
+!
+line con 0
+ logging synchronous
+ !------------- need to be before hand in 5 0
+ exec-timeout 0 0
+ ! CONSOLE PASSWORD
+ !password seoul_sw1
+ login
+!
+line vty 0 4
+ logging synchronous
+ !------------- need to be before hand in 5 0
+ exec-timeout 5 0
+ ! VTY PASSWORD
+ !password seoul_sw1
+ login
+!
+!vtp setting
+ vtp mode client
+ vtp domain seoul
+ vtp password seoul
+!
+!create vlan 999 interface
+interface vlan 999
+ ip address 192.168.99.3 255.255.255.0
+!
+!STP setting
+!rapid-pvst
+spanning-tree mode rapid-pvst
+!gi0/0-1 setting, PC
+interface range gi0/0-1
+ switchport mode access
+ switchport access vlan 10
+ ! bpduguard
+ spanning-tree bpduguard enable
+ ! portfast
+ spanning-tree portfast
+!
+!gi3/2-3 SEOUL_MLSW1,2
+interface range gi3/2-3
+  switchport trunk encapsulation dot1q
+  switchport mode trunk
+  !nonegotiate
+  switchport nonegotiate
+!
+end
+!

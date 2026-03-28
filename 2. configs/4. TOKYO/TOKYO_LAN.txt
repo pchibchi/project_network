@@ -1,0 +1,32 @@
+en
+!
+conf t
+!
+no ip domain-lookup
+!
+! HOSTNAME
+hostname TOKYO_LAN
+!
+line con 0
+ logging synchronous
+ !------------- need to be before hand in 5 0
+ exec-timeout 5 0
+ login
+!
+line vty 0 4
+ logging synchronous
+ !------------- need to be before hand in 5 0
+ exec-timeout 5 0
+ login
+!
+interface fastethernet0/0
+  no shutdown
+  ip address 192.168.90.1 255.255.255.0
+  ip address 192.168.100.1 255.255.255.0 secondary
+  ip address 192.168.110.1 255.255.255.0 secondary
+  ip address 192.168.120.1 255.255.255.0 secondary
+!
+ip route 0.0.0.0 0.0.0.0 fa0/0
+!
+end
+!

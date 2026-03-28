@@ -1,0 +1,73 @@
+en
+!
+conf t
+!------------------------------------------------------------BASIC SETTINGS
+no ip domain-lookup
+!
+! HOSTNAME
+hostname ISP1
+!
+! ENABLE PASSWORD
+enable secret isp1
+!------------------------------------------------------------ACCESS & CONTROL
+line con 0
+  logging synchronous
+  !need to be before hand in 5 0
+  exec-timeout 5 0
+  ! CONSOLE PASSWORD
+  password isp1
+  login
+!
+line vty 0 4
+  logging synchronous
+  !need to be before hand in 5 0
+  exec-timeout 5 0
+  ! VTY PASSWORD
+  password isp1
+  login
+!------------------------------------------------------------ROUTING PROTOCOL
+router ospf 1
+  router-id 1.1.1.1
+  passive-interface default
+  no passive-interface Serial1/0.12
+  no passive-interface Serial1/0.13
+  network 10.10.12.1 0.0.0.0 area 0
+  network 10.10.13.1 0.0.0.0 area 0
+  network 123.123.1.1 0.0.0.0 area 0
+  network 14.14.14.1 0.0.0.0 area 0
+  network 14.14.14.5 0.0.0.0 area 0
+!------------------------------------------------------------INTERFACE
+interface loopback 0 
+ ip address 123.123.1.1 255.255.255.255
+!
+interface serial 1/0
+  no shutdown
+  encapsulation frame-relay
+  no frame-relay inverse-arp
+!
+! ISP1-ISP2
+interface serial1/0.12 point-to-point
+  no shutdown
+  ip address 10.10.12.1 255.255.255.248
+  frame-relay interface-dlci 102
+!
+! ISP1-ISP3
+interface serial1/0.13 point-to-point
+  no shutdown
+  ip address 10.10.13.1 255.255.255.248
+  frame-relay interface-dlci 103
+!
+! ISP1-SEOUL_GW1
+interface serial1/0.14 point-to-point
+  no shutdown
+  ip address 14.14.14.1 255.255.255.252
+  frame-relay interface-dlci 104
+!
+! ISP1-SEOUL_GW2
+interface serial1/0.15 point-to-point
+  no shutdown
+  ip address 14.14.14.5 255.255.255.252
+  frame-relay interface-dlci 105
+!
+end
+!

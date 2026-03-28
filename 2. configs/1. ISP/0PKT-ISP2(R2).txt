@@ -1,0 +1,75 @@
+en
+!
+conf t
+!------------------------------------------------------------BASIC SETTINGS
+no ip domain-lookup
+!
+! HOSTNAME
+hostname ISP2
+!
+! ENABLE PASSWORD
+!enable secret isp2
+!------------------------------------------------------------ACCESS & CONTROL
+line con 0
+ logging synchronous
+ !------------- need to be before hand in 5 0
+ exec-timeout 0 0
+ ! CONSOLE PASSWORD
+ !password isp2
+ login
+!
+line vty 0 4
+ logging synchronous
+ !------------- need to be before hand in 5 0
+ exec-timeout 0 0
+ ! VTY PASSWORD
+ !password isp2
+ login
+!------------------------------------------------------------INTERFACE
+interface loopback 0 
+ ip address 123.123.2.2 255.255.255.255
+!
+!ISP2-ISP3
+interface serial 1/0
+ no shutdown
+ encapsulation hdlc
+ bandwidth 100000
+ ip address 10.10.23.2 255.255.255.248
+ clock rate 2000000
+!
+!ISP2-ISP1
+interface serial 1/1
+ no shutdown
+ encapsulation hdlc
+ bandwidth 100000
+ ip address 10.10.12.2 255.255.255.248
+!
+!ISP2-BUSAN_GW1
+interface serial 1/2
+ no shutdown
+ encapsulation hdlc
+ bandwidth 100000
+ ip address 26.26.26.1 255.255.255.252
+ clock rate 2000000
+!
+!ISP2-BUSAN_GW2
+interface serial 1/3
+ no shutdown
+ encapsulation hdlc
+ bandwidth 100000
+ ip address 26.26.26.5 255.255.255.252
+ clock rate 2000000
+!------------------------------------------------------------ROUTING PROTOCOL
+router ospf 1
+ router-id 2.2.2.2
+ passive-interface default
+ no passive-interface Serial1/0
+ no passive-interface Serial1/1
+ network 10.10.12.2 0.0.0.0 area 0
+ network 10.10.23.2 0.0.0.0 area 0
+ network 123.123.2.2 0.0.0.0 area 0
+ network 26.26.26.1 0.0.0.0 area 0
+ network 26.26.26.5 0.0.0.0 area 0
+!
+end
+!
